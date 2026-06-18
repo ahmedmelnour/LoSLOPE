@@ -8,6 +8,8 @@ FastAPI event loop (paho callbacks run in their own thread).
 import asyncio
 import json
 import ssl
+import threading
+import time
 import uuid
 
 import paho.mqtt.client as mqtt
@@ -16,6 +18,11 @@ from . import config
 from .ingest import ingest_reading
 from .schemas import ReadingIn
 
+# Short keepalive so a stale/half-open socket (common when a free host pauses
+# the instance between requests) is detected and torn down quickly.
+KEEPALIVE = 20
+WATCHDOG_PERIOD = 15
+
 
 class MqttIngestor:
     def __init__(self):
@@ -23,6 +30,8 @@ class MqttIngestor:
         self._loop: asyncio.AbstractEventLoop | None = None
         self._broadcast = None
         self.connected = False
+        self.msg_count = 0
+        self._watchdog_started = False
 
     def start(self, loop, broadcast):
         if not config.MQTT_ENABLED:
@@ -44,14 +53,34 @@ class MqttIngestor:
         c.on_connect = self._on_connect
         c.on_message = self._on_message
         c.on_disconnect = self._on_disconnect
+        c.reconnect_delay_set(min_delay=1, max_delay=15)
         self.client = c
         try:
-            c.connect(config.MQTT_HOST, config.MQTT_PORT, keepalive=60)
+            c.connect(config.MQTT_HOST, config.MQTT_PORT, keepalive=KEEPALIVE)
             c.loop_start()
             print(f"[mqtt] connecting to {config.MQTT_HOST}:{config.MQTT_PORT} "
                   f"topic={config.MQTT_TOPIC}")
         except Exception as e:
             print(f"[mqtt] connect failed: {e}")
+
+        # Watchdog: force a reconnect if the connection goes stale (paho's
+        # auto-reconnect can miss a half-open socket after an instance pause).
+        if not self._watchdog_started:
+            self._watchdog_started = True
+            threading.Thread(target=self._watchdog, daemon=True).start()
+
+    def _watchdog(self):
+        while True:
+            time.sleep(WATCHDOG_PERIOD)
+            c = self.client
+            if c is None:
+                continue
+            try:
+                if not c.is_connected():
+                    print("[mqtt] watchdog: not connected, reconnecting...")
+                    c.reconnect()
+            except Exception as e:
+                print(f"[mqtt] watchdog reconnect failed: {e}")
 
     def stop(self):
         if self.client:
@@ -83,6 +112,10 @@ class MqttIngestor:
             print(f"[mqtt] dropping bad payload on {msg.topic}: {e}")
             return
 
+        self.msg_count += 1
+        if self.msg_count == 1 or self.msg_count % 25 == 0:
+            print(f"[mqtt] received {self.msg_count} readings "
+                  f"(latest node {reading.id} seq {reading.seq})")
         out = ingest_reading(reading)
         if self._loop and self._broadcast:
             asyncio.run_coroutine_threadsafe(
@@ -98,6 +131,7 @@ class MqttIngestor:
             "connected": self.connected,
             "host": config.MQTT_HOST,
             "topic": config.MQTT_TOPIC,
+            "received": self.msg_count,
         }
 
 
