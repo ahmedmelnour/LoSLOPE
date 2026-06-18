@@ -8,6 +8,7 @@ FastAPI event loop (paho callbacks run in their own thread).
 import asyncio
 import json
 import ssl
+import uuid
 
 import paho.mqtt.client as mqtt
 
@@ -30,9 +31,11 @@ class MqttIngestor:
         self._loop = loop
         self._broadcast = broadcast
 
+        # Unique client id so multiple backends (e.g. local + Render) don't
+        # kick each other off the broker by reusing the same id.
         c = mqtt.Client(
             callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
-            client_id="loslope-backend",
+            client_id=f"loslope-backend-{uuid.uuid4().hex[:8]}",
         )
         if config.MQTT_USER:
             c.username_pw_set(config.MQTT_USER, config.MQTT_PASS)
