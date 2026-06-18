@@ -1,0 +1,13 @@
+# Keep the build context small and free of local/secret artifacts.
+**/.venv
+**/__pycache__
+**/*.pyc
+backend/.env
+backend/loslope.db
+backend/loslope.db-wal
+backend/loslope.db-shm
+backend/models/*.joblib
+frontend/node_modules
+frontend/dist
+tools/
+.git

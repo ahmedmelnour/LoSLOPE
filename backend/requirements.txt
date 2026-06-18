@@ -1,0 +1,9 @@
+fastapi>=0.115
+uvicorn[standard]>=0.34
+pydantic>=2.10
+scikit-learn>=1.6
+numpy>=2.1
+joblib>=1.4
+python-dateutil>=2.9
+paho-mqtt>=2.1
+python-dotenv>=1.0

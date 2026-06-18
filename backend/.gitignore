@@ -1,0 +1,13 @@
+# Secrets & local config
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Runtime artifacts
+loslope.db
+loslope.db-wal
+loslope.db-shm
+models/*.joblib

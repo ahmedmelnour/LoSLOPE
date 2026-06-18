@@ -1,0 +1,26 @@
+# Render Blueprint — deploy LoSLOPE as one free Docker web service.
+# In Render: New > Blueprint, point at this repo. You'll be prompted for the
+# secret env vars (MQTT_USER / MQTT_PASS / MQTT_HOST) on first deploy.
+services:
+  - type: web
+    name: loslope
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: MQTT_HOST
+        sync: false          # set in Render dashboard (your HiveMQ cluster URL)
+      - key: MQTT_PORT
+        value: "8883"
+      - key: MQTT_USER
+        sync: false          # set in Render dashboard
+      - key: MQTT_PASS
+        sync: false          # set in Render dashboard
+      - key: MQTT_TOPIC
+        value: loslope/readings
+      - key: MQTT_TLS
+        value: "true"
+      - key: AUTO_SEED
+        value: "true"

@@ -1,0 +1,24 @@
+# --- Secrets (never commit) ---
+backend/.env
+
+# --- Python ---
+**/.venv/
+**/__pycache__/
+*.pyc
+
+# --- Backend runtime artifacts ---
+backend/loslope.db
+backend/loslope.db-wal
+backend/loslope.db-shm
+backend/models/*.joblib
+
+# --- Frontend ---
+frontend/node_modules/
+frontend/dist/
+
+# --- Local tooling ---
+tools/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
