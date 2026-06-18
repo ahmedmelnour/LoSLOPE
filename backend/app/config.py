@@ -30,7 +30,18 @@ FRONTEND_DIST = BASE_DIR.parent / "frontend" / "dist"
 #   MQTT_PORT  8883 for TLS (HiveMQ Cloud default)
 #   MQTT_USER / MQTT_PASS  the broker credentials you created in HiveMQ
 #   MQTT_TOPIC topic the base station publishes to
-MQTT_HOST = _env("MQTT_HOST")
+def _clean_host(raw: str) -> str:
+    """Tolerate a host pasted with a scheme, :port, or trailing path so a
+    value like 'mqtts://host:8883/' still resolves to just 'host'."""
+    h = raw.strip()
+    if "://" in h:
+        h = h.split("://", 1)[1]
+    h = h.split("/", 1)[0]    # drop any path
+    h = h.split(":", 1)[0]    # drop any :port
+    return h
+
+
+MQTT_HOST = _clean_host(_env("MQTT_HOST"))
 MQTT_PORT = int(_env("MQTT_PORT", "8883"))
 MQTT_USER = _env("MQTT_USER")
 MQTT_PASS = _env("MQTT_PASS")
