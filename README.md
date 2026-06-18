@@ -226,6 +226,35 @@ Response includes the ML enrichment:
 
 ---
 
+## 5. Deploy online for free (Render, from GitHub)
+
+The repo ships a multi-stage `Dockerfile` (builds the frontend, runs the backend
+that serves it) and a `render.yaml` Blueprint, so the whole app runs as one free
+Render web service. Because the backend **subscribes to HiveMQ**, your physical
+base station feeds the cloud dashboard with no port-forwarding or PC required.
+
+1. **Push to GitHub** (one time):
+   ```powershell
+   # create an empty repo on github.com first (no README), then:
+   git remote add origin https://github.com/<your-username>/loslope.git
+   git push -u origin main
+   ```
+2. **Create the Render service:** Render → **New > Blueprint** → connect the repo.
+   It reads `render.yaml` and prompts for the secret env vars — enter your
+   **MQTT_HOST**, **MQTT_USER**, **MQTT_PASS** (HiveMQ cluster + credentials).
+3. Render builds the image and gives you a stable URL like
+   `https://loslope-xxxx.onrender.com`. Pushing to `main` auto-redeploys.
+
+**Free-tier notes:**
+- The service **sleeps after ~15 min idle** and cold-starts (~30–60 s) on the
+  next visit. `AUTO_SEED=true` reseeds an empty DB so it's always populated.
+- The SQLite DB + trained models live on an **ephemeral disk** — they reset on
+  each redeploy/restart (fine for a demo; add a paid disk or external DB for
+  permanent history).
+- Secrets stay in Render's env settings, never in the repo (`.env` is gitignored).
+
+---
+
 ## Project layout
 
 ```
