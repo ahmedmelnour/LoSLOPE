@@ -66,7 +66,7 @@ TELEGRAM_ENABLED = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
 
 # Google Gemini (free tier). Leave GEMINI_API_KEY blank to use the template.
 GEMINI_API_KEY = _env("GEMINI_API_KEY")
-GEMINI_MODEL = _env("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL = _env("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_ENABLED = bool(GEMINI_API_KEY)
 
 # Minimum level that triggers an alert (2 = WARNING). Repeat CRITICAL alerts

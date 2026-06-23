@@ -86,7 +86,13 @@ def _gemini_alert(out: dict, node_name: str) -> str | None:
     )
     body = json.dumps({
         "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"maxOutputTokens": 200, "temperature": 0.4},
+        "generationConfig": {
+            "maxOutputTokens": 256,
+            "temperature": 0.4,
+            # 2.5 Flash is a thinking model; disable thinking so the short alert
+            # isn't truncated by reasoning tokens (ignored by non-thinking models).
+            "thinkingConfig": {"thinkingBudget": 0},
+        },
     }).encode()
     req = urllib.request.Request(
         url, data=body, headers={"Content-Type": "application/json"}, method="POST"
