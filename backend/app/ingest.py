@@ -4,7 +4,7 @@ Keeps a single code path for: validate -> ML enrich -> store -> auto-register
 node -> note retrain. WebSocket broadcasting is handled by the caller, since
 the HTTP and MQTT entry points reach the event loop differently.
 """
-from . import db
+from . import alerts, db
 from .ml import pipeline
 from .schemas import ReadingIn
 
@@ -49,4 +49,8 @@ def ingest_reading(reading: ReadingIn) -> dict:
         })
 
     retrained = pipeline.note_new_reading()
-    return {**packet, "id": row_id, **enrichment, "retrained": retrained}
+    out = {**packet, "id": row_id, **enrichment, "retrained": retrained}
+
+    # Fire a Telegram alert on WARNING/CRITICAL (non-blocking; no-op if unset).
+    alerts.maybe_alert(out)
+    return out
